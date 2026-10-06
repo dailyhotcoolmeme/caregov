@@ -27,3 +27,18 @@ this public repository.
 `LiveUpdateTest` is opt-in, uses the public network, and requires version code 3
 installed while version code 4 is published. Run instrumentation with
 `-e liveOta true -e class com.ourmine.caregov.demo.LiveUpdateTest`.
+
+## Verification (2026-10-06)
+
+- Samsung SM-S921N, Android 16: version 0.2.1 installed and launched by USB.
+- On that phone, the published version 0.2.2 was fetched and downloaded over
+  HTTPS. Size, SHA-256, package identity, newer version, Android compatibility,
+  and matching APK signing certificate checks passed.
+- An intentionally mismatched SHA-256 was rejected. FileProvider read passed.
+- Version 0.2.2 (version code 4) was then installed by USB, not by the OS installer.
+- Five physical-device instrumentation tests passed, including the in-app
+  current-version screen. The separate live-download test passed once.
+- The public manifest URL initially returned a cached 404, then became reachable.
+- OS installation permission and installation confirmation were not automated
+  or bypassed. Full in-app OS installer completion remains unverified.
+- APK and source uploaded to GitHub. No store console upload or distribution.
