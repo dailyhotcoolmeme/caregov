@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assume.assumeTrue
@@ -25,7 +26,7 @@ class UpdateScreenTest {
     fun installedVersionIsCurrent() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("currentOta") == "true")
         compose.onNodeWithContentDescription("내 정보").performClick()
-        compose.onNodeWithContentDescription("앱 업데이트 확인").performClick()
+        compose.onNodeWithContentDescription("앱 업데이트 확인").performScrollTo().assertIsDisplayed().performClick()
         compose.waitUntil(30_000) {
             compose.onAllNodesWithText("최신 버전을 사용하고 있습니다.").fetchSemanticsNodes().isNotEmpty()
         }
