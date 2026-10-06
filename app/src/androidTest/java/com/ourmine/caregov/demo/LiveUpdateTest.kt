@@ -19,7 +19,7 @@ class LiveUpdateTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val repository = UpdateRepository(context)
         val update = repository.fetch()
-        assertEquals(4L, update.versionCode)
+        assertTrue(update.versionCode > context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode)
         val file = repository.download(update) {}
         assertEquals(update.sizeBytes, file.length())
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", file)

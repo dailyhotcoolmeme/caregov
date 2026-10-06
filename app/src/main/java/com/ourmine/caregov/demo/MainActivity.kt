@@ -13,10 +13,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val session = DemoSession(this)
         setContent {
             CaregovTheme {
-                CaregovApp(session, updater)
+                CaregovApp(updater)
             }
         }
     }

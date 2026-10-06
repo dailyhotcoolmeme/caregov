@@ -18,8 +18,8 @@ class SessionSmokeTest {
     fun patientHomeSurvivesActivityRecreationWithoutDemonstrationControls() {
         compose.onNodeWithContentDescription("시연 계정 변경").assertDoesNotExist()
         compose.onNodeWithText("시연 계정").assertDoesNotExist()
-        compose.onNodeWithText("김영희님 본인 동행").assertIsDisplayed()
+        compose.onNodeWithText("김영희님 동행").assertIsDisplayed()
         compose.activityRule.scenario.recreate()
-        compose.onNodeWithText("김영희님 본인 동행").assertIsDisplayed()
+        compose.onNodeWithText("김영희님 동행").assertIsDisplayed()
     }
 }

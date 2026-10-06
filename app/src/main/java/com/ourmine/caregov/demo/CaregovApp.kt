@@ -1,208 +1,211 @@
 package com.ourmine.caregov.demo
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.ourmine.caregov.demo.updates.UpdateDialog
-import com.ourmine.caregov.demo.updates.UpdatePhase
-import com.ourmine.caregov.demo.updates.UpdateViewModel
+import com.ourmine.caregov.demo.updates.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CaregovApp(session: DemoSession, updater: UpdateViewModel) {
-    val role = remember { session.loadRole() }
+fun CaregovApp(updater: UpdateViewModel) {
+    val context = LocalContext.current
+    val store = remember { ServiceStore(context) }
+    var account by remember { mutableStateOf(store.account()) }
+    var bookings by remember { mutableStateOf(store.bookings()) }
+    var tab by rememberSaveable { mutableStateOf(0) }
+    var detail by rememberSaveable { mutableStateOf<String?>(null) }
+    var applying by rememberSaveable { mutableStateOf(false) }
     var showUpdate by rememberSaveable { mutableStateOf(false) }
-
     LaunchedEffect(updater.state.phase) {
         if (updater.state.phase == UpdatePhase.AVAILABLE) showUpdate = true
     }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("병원동행", style = MaterialTheme.typography.titleLarge) },
-                actions = {
-                    IconButton(onClick = {
-                        showUpdate = true
-                        if (updater.state.phase != UpdatePhase.READY && updater.state.phase != UpdatePhase.DOWNLOADING) updater.check()
-                    }) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "앱 업데이트 확인")
+    BackHandler(enabled = detail != null || applying || tab != 0) {
+        if (applying) applying = false else if (detail != null) detail = null else tab = 0
+    }
+    val current = account
+    if (current == null) {
+        LoginScreen { phone, pin -> store.signIn(phone, pin)?.also { account = it; tab = 0; detail = null } }
+    } else {
+        val visible = store.visible(current, bookings).sortedWith(compareBy({ it.date }, { it.time }))
+        val selected = visible.firstOrNull { it.id == detail }
+        val labels = when (current.role) {
+            DemoRole.MANAGER -> listOf("홈", "내 일정", "내 정보")
+            DemoRole.OPERATOR -> listOf("홈", "예약 관리", "내 정보")
+            else -> listOf("홈", "예약 내역", "내 정보")
+        }
+        Scaffold(
+            topBar = { TopAppBar(
+                title = { Text(if (applying) "동행 신청" else if (selected != null) "예약 상세" else "병원동행") },
+                navigationIcon = {
+                    if (applying || selected != null) IconButton(onClick = { applying = false; detail = null }) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, "뒤로")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-    ) { insets ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(insets)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    "${role.label} · ${role.accountName}",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Text(
-                    if (role == DemoRole.OPERATOR) "오늘의 운영 현황" else "${role.accountName}님, 안녕하세요",
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Text(
-                    "10월 6일 화요일",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-
-            if (role == DemoRole.OPERATOR) {
-                OperationsOverview()
-            } else {
-                AppointmentOverview(role)
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("연락 정보", style = MaterialTheme.typography.titleMedium)
-                ContactRow(
-                    "이용자",
-                    "김영희",
-                )
-                HorizontalDivider()
-                ContactRow(if (role == DemoRole.MANAGER) "공유받는 보호자" else "담당 매니저",
-                    if (role == DemoRole.MANAGER) "이준호 · 아들" else "박서연",
-                )
-            }
-        }
-    }
-
-    if (showUpdate) UpdateDialog(updater = updater, onDismiss = { showUpdate = false })
-
-}
-
-@Composable
-private fun AppointmentOverview(role: DemoRole) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            if (role == DemoRole.MANAGER) "오늘의 일정" else "오늘의 동행",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
-            Column(
-                Modifier.fillMaxWidth().padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.DateRange,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("오전 10:00", style = MaterialTheme.typography.titleMedium)
+                actions = { if (!applying && selected == null) Text(current.role.label, Modifier.padding(end = 20.dp),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            ) },
+            bottomBar = { if (!applying && selected == null) NavigationBar(containerColor = Color.White) {
+                listOf(Icons.Outlined.Home, Icons.Outlined.DateRange, Icons.Outlined.Person).forEachIndexed { index, icon ->
+                    NavigationBarItem(selected = tab == index, onClick = { tab = index },
+                        icon = { Icon(icon, null) }, label = { Text(labels[index]) })
+                }
+            } },
+        ) { insets ->
+            if (applying) BookingForm(current, Modifier.padding(insets)) { patient, hospital, department, date, time, meeting, support, note ->
+                val added = store.create(current, patient, hospital, department, date, time, meeting, support, note)
+                bookings = store.bookings(); applying = false; detail = added.id
+            } else Column(Modifier.fillMaxSize().padding(insets).verticalScroll(key(current.id, tab, detail) { rememberScrollState() })
+                .padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                when {
+                    selected != null -> BookingDetails(selected)
+                    tab == 2 -> AccountScreen(current, onUpdate = {
+                        showUpdate = true
+                        if (updater.state.phase != UpdatePhase.READY && updater.state.phase != UpdatePhase.DOWNLOADING) updater.check()
+                    }, onSignOut = { store.signOut(); account = null })
+                    tab == 1 -> {
+                        SectionTitle(labels[1], "${visible.size}건")
+                        if (visible.isEmpty()) Text("예약된 동행이 없습니다.")
+                        visible.forEach { BookingCard(it) { detail = it.id } }
                     }
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small,
-                    ) {
-                        Text(
-                            "예약 확정",
-                            Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = MaterialTheme.typography.labelMedium,
-                        )
+                    else -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(LocalDate.now().format(DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                            Text("${current.name}님,\n안녕하세요", style = MaterialTheme.typography.headlineSmall)
+                            Text(when (current.role) {
+                                DemoRole.PATIENT -> "병원 가는 날,\n함께하겠습니다."
+                                DemoRole.GUARDIAN -> "가족의 병원 방문을 함께 챙깁니다."
+                                DemoRole.MANAGER -> "오늘의 동행 일정을 확인하세요."
+                                DemoRole.OPERATOR -> "예약과 배정 현황을 확인하세요."
+                            }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (current.role == DemoRole.PATIENT || current.role == DemoRole.GUARDIAN) Button(
+                            onClick = { applying = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
+                        ) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(10.dp)); Text("동행 신청") }
+                        if (current.role == DemoRole.OPERATOR) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                            Statistic("전체 예약", visible.size.toString(), Modifier.weight(1f))
+                            Statistic("배정 대기", visible.count { it.manager.isEmpty() }.toString(), Modifier.weight(1f))
+                        }
+                        val next = visible.firstOrNull { it.date >= LocalDate.now().toString() && it.status != "동행 완료" }
+                        SectionTitle(if (current.role == DemoRole.MANAGER) "다가오는 일정" else "다가오는 동행")
+                        if (next != null) BookingCard(next) { detail = next.id } else Text("예정된 동행이 없습니다.")
+                        HorizontalDivider()
+                        if (current.role == DemoRole.GUARDIAN) {
+                            SectionTitle("함께 돌보는 가족"); InfoLine("어머니", "김영희")
+                        } else if (current.role == DemoRole.PATIENT) {
+                            SectionTitle("동행 서비스"); InfoLine("병원 방문", "접수부터 귀가까지 함께합니다.")
+                        }
                     }
                 }
-                Text("서울의료원 · 내과", style = MaterialTheme.typography.titleLarge)
-                Text(
-                    when (role) {
-                        DemoRole.PATIENT -> "김영희님 본인 동행"
-                        DemoRole.GUARDIAN -> "어머니 김영희님 동행"
-                        else -> "김영희님 · 도보 이동 가능"
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                HorizontalDivider()
-                ContactRow("만날 장소", "서울의료원 1층 로비")
-                ContactRow("담당 매니저", "박서연")
             }
         }
     }
+    if (showUpdate) UpdateDialog(updater, onDismiss = { showUpdate = false })
 }
 
 @Composable
-private fun OperationsOverview() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Metric("오늘 예약", "1", Modifier.weight(1f))
-            Metric("미배정", "0", Modifier.weight(1f))
+private fun BookingCard(booking: Booking, onClick: () -> Unit) {
+    OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "예약 ${booking.id}" },
+        colors = CardDefaults.outlinedCardColors(containerColor = Color.White)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(booking.date.drop(5).replace("-", ".") + " · " + booking.time,
+                    style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                StatusLabel(booking.status)
+            }
+            Text("${booking.hospital} · ${booking.department}", style = MaterialTheme.typography.titleLarge)
+            Text("${booking.patient}님 동행", style = MaterialTheme.typography.bodyLarge)
+            HorizontalDivider()
+            InfoLine("만날 장소", booking.meeting)
+            InfoLine("담당 매니저", booking.manager.ifBlank { "배정 대기" })
+            Text("예약 상세 보기", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
         }
-        HorizontalDivider()
-        Text("오늘 예약", style = MaterialTheme.typography.titleMedium)
-        Text("10:00 · 김영희", style = MaterialTheme.typography.titleMedium)
-        Text("서울의료원 · 내과", style = MaterialTheme.typography.bodyLarge)
-        ContactRow("배정 상태", "박서연 매니저 배정 완료")
     }
 }
 
 @Composable
-private fun Metric(label: String, value: String, modifier: Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-        Text(value, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineSmall)
+private fun BookingDetails(booking: Booking) {
+    StatusLabel(booking.status)
+    Text("${booking.hospital}\n${booking.department}", style = MaterialTheme.typography.headlineSmall)
+    Text("예약번호 ${booking.id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    HorizontalDivider(); SectionTitle("동행 정보")
+    InfoLine("이용자", booking.patient)
+    InfoLine("방문 일시", "${booking.date} ${booking.time}")
+    InfoLine("만날 장소", booking.meeting)
+    InfoLine("이동 지원", booking.support)
+    InfoLine("요청사항", booking.note.ifBlank { "등록된 요청사항이 없습니다." })
+    HorizontalDivider(); SectionTitle("담당 매니저")
+    InfoLine("매니저", booking.manager.ifBlank { "배정 대기" })
+    HorizontalDivider(); SectionTitle("동행 결과")
+    Text("아직 동행 결과가 등록되지 않았습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun AccountScreen(account: ServiceAccount, onUpdate: () -> Unit, onSignOut: () -> Unit) {
+    var confirmLogout by remember { mutableStateOf(false) }
+    Text(account.name, style = MaterialTheme.typography.headlineSmall)
+    Text(account.role.label, color = MaterialTheme.colorScheme.primary)
+    HorizontalDivider()
+    InfoLine("휴대폰", account.phone.take(3) + "-" + account.phone.substring(3, 7) + "-" + account.phone.takeLast(4))
+    HorizontalDivider()
+    ListItem(headlineContent = { Text("앱 업데이트") }, supportingContent = { Text("현재 버전 ${BuildConfig.VERSION_NAME}") },
+        leadingContent = { Icon(Icons.Outlined.Refresh, null) },
+        modifier = Modifier.clickable(onClick = onUpdate).semantics { contentDescription = "앱 업데이트 확인" },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent))
+    TextButton(onClick = { confirmLogout = true }) { Text("로그아웃") }
+    if (confirmLogout) AlertDialog(onDismissRequest = { confirmLogout = false }, title = { Text("로그아웃할까요?") },
+        confirmButton = { TextButton(onClick = { confirmLogout = false; onSignOut() }) { Text("로그아웃") } },
+        dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("취소") } })
+}
+
+@Composable
+internal fun SectionTitle(title: String, trailing: String = "") {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        if (trailing.isNotBlank()) Text(trailing, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun ContactRow(label: String, value: String) {
+private fun InfoLine(label: String, value: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-        Text(value, style = MaterialTheme.typography.bodyLarge)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun StatusLabel(status: String) {
+    Surface(color = if (status == "접수 완료") Color(0xFFEAF0FC) else MaterialTheme.colorScheme.primaryContainer,
+        shape = MaterialTheme.shapes.small) {
+        Text(status, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium,
+            color = if (status == "접수 완료") Color(0xFF365CAC) else MaterialTheme.colorScheme.onPrimaryContainer)
+    }
+}
+
+@Composable
+private fun Statistic(label: String, value: String, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.headlineSmall)
     }
 }

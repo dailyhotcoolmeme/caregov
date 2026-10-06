@@ -10,13 +10,16 @@ demonstration labels, scenario controls, or arbitrary role switching.
 
 ## Delivery Steps
 
-1. DONE: Android project, reproducible APK build, app launch.
-2. Shared visual design, navigation, accessible phone layouts.
-3. Patient and guardian booking, manager details, progress, reports, history.
-4. Manager schedule, acceptance, progress updates, report entry, settlement.
-5. Operator assignment, schedule changes, operations overview, settlement.
-6. Shared booking state, restart persistence, account access boundaries.
-7. End-to-end Android verification, final APK, screenshots, OTA update verification.
+1. Shared design, role-specific navigation and account structure. Frontend and
+   local fictional identities implemented; production authentication pending.
+2. Patient self-booking and guardian proxy-booking. Basic local request flow
+   implemented; contact, relationship, and service option extensions pending.
+3. Operator intake, assignment, rescheduling, and cancellation.
+4. Manager acceptance, visit progress, and completion.
+5. Patient/guardian progress visibility and sharing boundaries.
+6. Reports and service history.
+7. Fees and manager settlement; real payment integration separate.
+8. End-to-end verification, phone installation, and OTA delivery.
 
 ## Implementation Requirements
 
@@ -54,6 +57,28 @@ Booking and operational workflows are still pending; the current APK is not a co
   `output/screenshots/step01-small-large-text.png`.
 
 The test dependencies explicitly use Espresso 3.7.0 for Android 16 compatibility.
+
+## Frontend And Booking Progress (2026-10-06)
+
+- Added role-specific home, booking list, detail, account, and login screens.
+- Update action lives in the account screen; no demonstration account controls.
+- Patient self-request and guardian proxy-request forms save actual local records.
+- Required fields and consent gate submission; past visit times are rejected.
+- Saved records survive activity and application restart. Requests remain pending
+  assignment; the app does not invent a confirmed manager or report.
+- Patient/guardian access and assigned-manager visibility are filtered locally.
+- Local fictional identity login only, not production server authentication.
+  SMS verification, account provisioning, server-side authorization, multi-device
+  synchronization, payment, assignment, progress, and report writing are pending.
+- Fictional accounts: 01000000001 (patient), 01000000002 (guardian),
+  01000000003 (manager), 01000000004 (operator); local fixture password 482619.
+  These are public fixtures, not real credentials. Do not use for real patients.
+- Version 0.3.0 / code 5: APK build and lint passed; signature verified.
+- 720x1280 at 130% font scale: 10 instrumentation tests passed, including form
+  submission, recreation, four account menu contexts, persistence, permissions,
+  rejected past dates, and update manifest validation. Screenshot reviewed.
+- Physical phone disconnected during this stage; 0.3.0 direct installation
+  is not verified. OTA asset upload is independent of store distribution.
 
 Build references:
 

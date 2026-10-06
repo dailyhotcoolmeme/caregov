@@ -24,8 +24,8 @@ Preserve that key outside Git; a different key cannot update this installation.
 This is not a store-release signing configuration. No keys or tokens belong in
 this public repository.
 
-`LiveUpdateTest` is opt-in, uses the public network, and requires version code 3
-installed while version code 4 is published. Run instrumentation with
+`LiveUpdateTest` is opt-in, uses the public network, and requires an older version
+installed than the published manifest. Run instrumentation with
 `-e liveOta true -e class com.ourmine.caregov.demo.LiveUpdateTest`.
 
 ## Verification (2026-10-06)

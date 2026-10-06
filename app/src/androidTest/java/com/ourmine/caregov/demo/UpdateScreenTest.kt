@@ -21,6 +21,7 @@ class UpdateScreenTest {
     @Test
     fun installedVersionIsCurrent() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("currentOta") == "true")
+        compose.onNodeWithText("내 정보").performClick()
         compose.onNodeWithContentDescription("앱 업데이트 확인").performClick()
         compose.waitUntil(30_000) {
             compose.onAllNodesWithText("최신 버전을 사용하고 있습니다.").fetchSemanticsNodes().isNotEmpty()
