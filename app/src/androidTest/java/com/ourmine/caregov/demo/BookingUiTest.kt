@@ -1,6 +1,7 @@
 package com.ourmine.caregov.demo
 
 import androidx.compose.ui.test.*
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -16,14 +17,31 @@ class BookingUiTest {
         assumeTrue(InstrumentationRegistry.getArguments().getString("bookingUi") == "true")
         val hospital = "한빛-${java.util.UUID.randomUUID().toString().take(4)}"
         compose.onNodeWithText("동행 신청").performScrollTo().performClick()
+        compose.onNodeWithText("다음").performScrollTo().performClick()
         compose.onNodeWithText("병원 이름").performTextInput(hospital)
         compose.onNodeWithText("진료과").performTextInput("내과")
         compose.onNodeWithText("만날 장소").performScrollTo().performTextInput("1층 로비")
+        compose.onNodeWithText("다음").performScrollTo().performClick()
+        compose.onNodeWithText("신청 내용 확인").performScrollTo().assertIsDisplayed()
+        val image = compose.onRoot().captureToImage().asAndroidBitmap()
+        java.io.File(compose.activity.externalCacheDir, "request-review.png").outputStream().use {
+            image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
         compose.onNode(isToggleable()).performScrollTo().performClick()
         compose.onNodeWithText("동행 신청하기").performScrollTo().performClick()
         compose.onNodeWithText("접수 완료").performScrollTo().assertIsDisplayed()
         compose.activityRule.scenario.recreate()
         compose.onNodeWithText("$hospital\n내과").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("신청 수정").performScrollTo().performClick()
+        compose.onNodeWithText("다음").performScrollTo().performClick()
+        compose.onNodeWithText("만날 장소").performScrollTo().performTextReplacement("2층 접수처")
+        compose.onNodeWithText("다음").performScrollTo().performClick()
+        compose.onNode(isToggleable()).performScrollTo().performClick()
+        compose.onNodeWithText("변경 내용 저장").performScrollTo().performClick()
+        compose.onNodeWithText("2층 접수처").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("신청 취소").performScrollTo().performClick()
+        compose.onNodeWithText("취소 확정").performClick()
+        compose.onNodeWithText("취소된 신청입니다.").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("뒤로").performClick()
         compose.onNodeWithText("예약 내역").performClick()
         compose.onNodeWithText("$hospital · 내과", useUnmergedTree = true).performScrollTo().assertIsDisplayed()

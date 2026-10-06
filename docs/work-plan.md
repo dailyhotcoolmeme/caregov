@@ -12,8 +12,9 @@ demonstration labels, scenario controls, or arbitrary role switching.
 
 1. Shared design, role-specific navigation and account structure. Frontend and
    local fictional identities implemented; production authentication pending.
-2. Patient self-booking and guardian proxy-booking. Basic local request flow
-   implemented; contact, relationship, and service option extensions pending.
+2. Patient self-booking and guardian proxy-booking. Local request flow,
+   contacts, relationships, service options, quote, review, modification,
+   and cancellation implemented. Server integration remains pending.
 3. Operator intake, assignment, rescheduling, and cancellation.
 4. Manager acceptance, visit progress, and completion.
 5. Patient/guardian progress visibility and sharing boundaries.
@@ -85,3 +86,28 @@ Build references:
 - https://developer.android.com/build/releases/agp-8-13-0-release-notes
 - https://developer.android.com/develop/ui/compose/setup-compose-dependencies-and-compiler
 - https://developer.android.com/jetpack/androidx/releases/test
+
+## Stage 2 Request Workflow (2026-10-06)
+
+- Version 0.4.0 / code 7. Three steps: user/service, hospital visit, final review.
+- Both self and proxy requests include patient contacts; proxy requests require
+  guardian contact and relationship. Only explicitly linked fixture patients
+  receive proxy records in their own account, not patients with matching names.
+- Sharing selection persists: none, progress only, or results included. Guardian
+  report access requires results sharing; this is a local fixture boundary only.
+- Fictional quote requested by the owner: KRW 20,000 per hour, 1-8 hours.
+  Transport and medical charges excluded. No approved commercial tariff or
+  actual payment integration. Quote is recalculated at save time and persisted.
+- Explicit consent required on each submission, including changes. This does
+  not constitute production legal-consent or identity verification.
+- Requesters may edit or cancel only their own future pending requests.
+  Confirmed, cancelled, and other people's bookings cannot be changed.
+  Revision checks reject stale writes; cancellation requires a reason.
+- Existing records without new fields remain readable, without data resets.
+- APK build and lint passed. Default emulator: 17 tests passed. Small display
+  (720x1280, font scale 1.3): 16 tests passed, including creation, recreation,
+  modification, cancellation, account menus, storage, permissions, and manifest.
+  Three OTA Worker tests passed. Review screenshot inspected.
+- Physical installation of this version is not verified. Delivery is via R2,
+  without a routine USB connection or any store-console distribution.
+- Next: operator intake and manager assignment, then manager visit progress.

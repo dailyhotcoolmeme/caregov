@@ -33,12 +33,16 @@ fun CaregovApp(updater: UpdateViewModel) {
     var tab by rememberSaveable { mutableStateOf(0) }
     var detail by rememberSaveable { mutableStateOf<String?>(null) }
     var applying by rememberSaveable { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
+    var formStep by rememberSaveable { mutableStateOf(0) }
     var showUpdate by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(updater.state.phase) {
         if (updater.state.phase == UpdatePhase.AVAILABLE) showUpdate = true
     }
     BackHandler(enabled = detail != null || applying || tab != 0) {
-        if (applying) applying = false else if (detail != null) detail = null else tab = 0
+        if (applying && formStep > 0) formStep--
+        else if (applying) { applying = false; editing = false }
+        else if (detail != null) detail = null else tab = 0
     }
     val current = account
     if (current == null) {
@@ -53,9 +57,13 @@ fun CaregovApp(updater: UpdateViewModel) {
         }
         Scaffold(
             topBar = { TopAppBar(
-                title = { Text(if (applying) "동행 신청" else if (selected != null) "예약 상세" else "병원동행") },
+                title = { Text(if (applying) { if (editing) "신청 수정" else "동행 신청" } else if (selected != null) "예약 상세" else "병원동행") },
                 navigationIcon = {
-                    if (applying || selected != null) IconButton(onClick = { applying = false; detail = null }) {
+                    if (applying || selected != null) IconButton(onClick = {
+                        if (applying && formStep > 0) formStep--
+                        else if (applying) { applying = false; editing = false }
+                        else detail = null
+                    }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "뒤로")
                     }
                 },
@@ -70,13 +78,15 @@ fun CaregovApp(updater: UpdateViewModel) {
                 }
             } },
         ) { insets ->
-            if (applying) BookingForm(current, Modifier.padding(insets)) { patient, hospital, department, date, time, meeting, support, note ->
-                val added = store.create(current, patient, hospital, department, date, time, meeting, support, note)
-                bookings = store.bookings(); applying = false; detail = added.id
+            if (applying) BookingForm(current, if (editing) selected else null, formStep, { formStep = it }, Modifier.padding(insets)) { draft ->
+                val added = if (editing) store.update(current, requireNotNull(selected).id, selected.revision, draft) else store.create(current, draft)
+                bookings = store.bookings(); applying = false; editing = false; formStep = 0; detail = added.id
             } else Column(Modifier.fillMaxSize().padding(insets).verticalScroll(key(current.id, tab, detail) { rememberScrollState() })
                 .padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 when {
-                    selected != null -> BookingDetails(selected)
+                    selected != null -> BookingDetails(selected, store.canModify(current, selected), store.canReadReport(current, selected),
+                        onEdit = { editing = true; formStep = 0; applying = true },
+                        onCancel = { reason -> store.cancel(current, selected.id, selected.revision, reason); bookings = store.bookings() })
                     tab == 2 -> AccountScreen(current, onUpdate = {
                         showUpdate = true
                         if (updater.state.phase != UpdatePhase.READY && updater.state.phase != UpdatePhase.DOWNLOADING) updater.check()
@@ -99,13 +109,13 @@ fun CaregovApp(updater: UpdateViewModel) {
                             }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         if (current.role == DemoRole.PATIENT || current.role == DemoRole.GUARDIAN) Button(
-                            onClick = { applying = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
+                            onClick = { editing = false; formStep = 0; applying = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
                         ) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(10.dp)); Text("동행 신청") }
                         if (current.role == DemoRole.OPERATOR) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                             Statistic("전체 예약", visible.size.toString(), Modifier.weight(1f))
-                            Statistic("배정 대기", visible.count { it.manager.isEmpty() }.toString(), Modifier.weight(1f))
+                            Statistic("배정 대기", visible.count { it.manager.isEmpty() && it.status == "접수 완료" }.toString(), Modifier.weight(1f))
                         }
-                        val next = visible.firstOrNull { it.date >= LocalDate.now().toString() && it.status != "동행 완료" }
+                        val next = visible.firstOrNull { it.date >= LocalDate.now().toString() && it.status !in listOf("동행 완료", "신청 취소") }
                         SectionTitle(if (current.role == DemoRole.MANAGER) "다가오는 일정" else "다가오는 동행")
                         if (next != null) BookingCard(next) { detail = next.id } else Text("예정된 동행이 없습니다.")
                         HorizontalDivider()
@@ -143,20 +153,43 @@ private fun BookingCard(booking: Booking, onClick: () -> Unit) {
 }
 
 @Composable
-private fun BookingDetails(booking: Booking) {
+private fun BookingDetails(booking: Booking, editable: Boolean, reportShared: Boolean,
+    onEdit: () -> Unit, onCancel: (String) -> Unit) {
+    var confirmCancel by rememberSaveable(booking.id) { mutableStateOf(false) }
+    var cancelReason by rememberSaveable(booking.id) { mutableStateOf("일정 변경") }
+    var cancelError by remember { mutableStateOf<String?>(null) }
     StatusLabel(booking.status)
     Text("${booking.hospital}\n${booking.department}", style = MaterialTheme.typography.headlineSmall)
     Text("예약번호 ${booking.id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     HorizontalDivider(); SectionTitle("동행 정보")
     InfoLine("이용자", booking.patient)
+    if (booking.options.patientPhone.isNotBlank()) InfoLine("이용자 연락처", booking.options.patientPhone)
+    InfoLine("이용자와의 관계", booking.options.relationship)
+    if (booking.options.guardianPhone.isNotBlank()) InfoLine("보호자 연락처", booking.options.guardianPhone)
+    InfoLine("서비스", booking.options.service.label)
     InfoLine("방문 일시", "${booking.date} ${booking.time}")
     InfoLine("만날 장소", booking.meeting)
     InfoLine("이동 지원", booking.support)
     InfoLine("요청사항", booking.note.ifBlank { "등록된 요청사항이 없습니다." })
+    InfoLine("정보 공유", booking.options.sharing.label)
+    PriceSummary(booking.options.hours, booking.options.estimatedWon)
     HorizontalDivider(); SectionTitle("담당 매니저")
     InfoLine("매니저", booking.manager.ifBlank { "배정 대기" })
     HorizontalDivider(); SectionTitle("동행 결과")
-    Text("아직 동행 결과가 등록되지 않았습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(if (booking.status == "신청 취소") "취소된 신청입니다." else if (reportShared) "아직 동행 결과가 등록되지 않았습니다."
+        else "결과 정보가 공유되지 않았습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    if (booking.cancellationReason.isNotBlank()) InfoLine("취소 사유", booking.cancellationReason)
+    if (editable) {
+        HorizontalDivider()
+        OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("신청 수정") }
+        TextButton(onClick = { cancelError = null; confirmCancel = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("신청 취소") }
+    }
+    if (confirmCancel) AlertDialog(onDismissRequest = { confirmCancel = false }, title = { Text("동행 신청을 취소할까요?") },
+        text = { Column { listOf("일정 변경", "이용 필요 없음", "기타").forEach { reason -> ChoiceRadio(reason, reason == cancelReason) { cancelReason = reason } }
+            if (cancelError != null) Text(cancelError!!, color = MaterialTheme.colorScheme.error) } },
+        confirmButton = { TextButton(onClick = {
+            runCatching { onCancel(cancelReason) }.onSuccess { confirmCancel = false }.onFailure { cancelError = it.message ?: "취소하지 못했습니다." }
+        }) { Text("취소 확정") } }, dismissButton = { TextButton(onClick = { confirmCancel = false }) { Text("돌아가기") } })
 }
 
 @Composable
@@ -195,7 +228,7 @@ private fun InfoLine(label: String, value: String) {
 
 @Composable
 private fun StatusLabel(status: String) {
-    Surface(color = if (status == "접수 완료") Color(0xFFEAF0FC) else MaterialTheme.colorScheme.primaryContainer,
+    Surface(color = if (status == "신청 취소") Color(0xFFEDF0F1) else if (status == "접수 완료") Color(0xFFEAF0FC) else MaterialTheme.colorScheme.primaryContainer,
         shape = MaterialTheme.shapes.small) {
         Text(status, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium,
             color = if (status == "접수 완료") Color(0xFF365CAC) else MaterialTheme.colorScheme.onPrimaryContainer)
