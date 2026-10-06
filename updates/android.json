@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "applicationId": "com.ourmine.caregov.demo",
+  "versionCode": 4,
+  "versionName": "0.2.2",
+  "apkUrl": "https://github.com/dailyhotcoolmeme/caregov/releases/download/android-v0.2.2/caregov.apk",
+  "sha256": "55af75bbb7a1e361972a211bde44000a026778ca8e0a966e97b509e3a0282a84",
+  "sizeBytes": 9933941,
+  "releaseNotes": "앱 업데이트 확인 및 다운로드 기능을 추가했습니다."
+}

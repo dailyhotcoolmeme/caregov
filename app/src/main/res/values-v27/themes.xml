@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.Caregov" parent="Theme.Caregov.Base">
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>
