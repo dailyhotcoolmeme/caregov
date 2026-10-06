@@ -15,18 +15,19 @@ demonstration labels, scenario controls, or arbitrary role switching.
 2. Patient self-booking and guardian proxy-booking. Local request flow,
    contacts, relationships, service options, quote, review, modification,
    and cancellation implemented. Server integration remains pending.
-3. Operator intake, assignment, rescheduling, and cancellation.
-4. Manager acceptance, visit progress, and completion.
-5. Patient/guardian progress visibility and sharing boundaries.
-6. Reports and service history.
-7. Fees and manager settlement; real payment integration separate.
+3. Operator intake, assignment, rescheduling, and cancellation: local workflow implemented.
+4. Manager acceptance, visit progress, and completion: local workflow implemented.
+5. Patient/guardian progress visibility and sharing boundaries: local workflow implemented.
+6. Reports, reviews, and service history: local workflow implemented.
+7. Fees and manager settlement confirmation: local workflow implemented;
+   real payment and transfer integration separate.
 8. End-to-end verification, phone installation, and OTA delivery.
 
 ## Implementation Requirements
 
 - User records are fictional. Application actions must persist and affect related workflows.
 - Do not substitute scenario buttons or fixed success screens for working features.
-- Payments, notifications, authentication, and server integration are not implemented yet;
+- Real payments, push/SMS notifications, production authentication, and server integration are not implemented yet;
   do not present those integrations as complete or initiate real charges without authorization.
 - APK generation and direct installation do not authorize store distribution.
 - Do not use Play testing tracks, TestFlight, or other test distribution services.
@@ -37,9 +38,9 @@ demonstration labels, scenario controls, or arbitrary role switching.
 Implementation: Kotlin, Jetpack Compose, Android Gradle Plugin 8.13.2,
 Gradle 8.14.3, JDK 17, minimum Android API 26, target API 36.
 
-The current bootstrap screen has a fictional patient and an appointment.
+The original bootstrap screen had a fictional patient and an appointment.
 The initial role-selection menu was removed following the owner's clarification.
-Booking and operational workflows are still pending; the current APK is not a complete app.
+Booking and operational workflows were still pending in that initial APK.
 
 ### Verification (2026-10-06)
 
@@ -59,7 +60,7 @@ Booking and operational workflows are still pending; the current APK is not a co
 
 The test dependencies explicitly use Espresso 3.7.0 for Android 16 compatibility.
 
-## Frontend And Booking Progress (2026-10-06)
+## Version 0.3.0 Frontend And Booking Progress (2026-10-06)
 
 - Added role-specific home, booking list, detail, account, and login screens.
 - Update action lives in the account screen; no demonstration account controls.
@@ -110,4 +111,37 @@ Build references:
   Three OTA Worker tests passed. Review screenshot inspected.
 - Physical installation of this version is not verified. Delivery is via R2,
   without a routine USB connection or any store-console distribution.
-- Next: operator intake and manager assignment, then manager visit progress.
+- This stage was followed by the batched operational workflows below.
+
+## Batched Operations, Progress And Results (2026-10-06)
+
+- Version 0.5.0 / code 8 groups remaining local workflows in one OTA upload.
+  Build after completing the batch, not once per implementation stage.
+- Operator reservation filters, assignment/reassignment, future rescheduling,
+  cancellation before visits start, and manager schedule overlap rejection.
+- Managers accept or decline with a reason. Rescheduling requires another
+  acceptance. Only the assigned manager can advance the ordered visit steps.
+  Examination uses an examination-completed step; return-home service skips
+  hospital and consultation steps. Started visits cannot be reassigned/cancelled.
+- Completion requires arrival home and a submitted report. Reports include
+  accompaniment details, hospital guidance, medication handover, next visit,
+  and entered actual minutes. The app does not generate medical advice.
+- Patient/guardian result access, persisted reviews, and post-visit sharing changes.
+  Progress-only guardians do not see report contents or private request notes.
+  No-sharing hides patient-owned records from the linked guardian.
+- Local processing timeline and notification inbox; not push or SMS delivery.
+- Fictional fee rule: minimum one hour, then 30-minute increments at KRW
+  10,000 per increment. Manager share 80%, operation fee 20%. Amounts are
+  recorded when the report is submitted, not charged to a payment instrument.
+  Operator confirmation changes settlement records only, never sends money.
+- Additional fictional manager: 01000000005 / same fixture password 482619.
+- Existing records migrate lazily with empty workflow history, no data reset.
+- This is a functional local app using fictional accounts, not a production
+  backend. Multi-device synchronization, server authorization, real payments,
+  notifications, and patient identity verification remain separate work.
+- Delivery status and verification results are recorded in `android-updates.md`.
+- Final APK build and lint passed (zero lint errors). Android 16 emulator:
+  27 tests passed at 1080x2400; 26 passed at 720x1280 with 130% font scale.
+  Three OTA Worker tests passed. The cross-account UI test covers assignment,
+  acceptance, all visit steps, report persistence, guardian results, review,
+  operator settlement, and revocation of result sharing. Screenshots inspected.

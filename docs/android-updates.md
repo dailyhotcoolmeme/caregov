@@ -41,6 +41,25 @@ Do not replace the legacy pointer with an R2 APK URL: old apps reject it.
 
 ## R2 Verification (2026-10-06)
 
+### Version 0.5.0 / Code 8
+
+- Status: uploaded to R2, one OTA publication for the batched workflows.
+- APK: https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.0-abada9870cae.apk
+- Public APK SHA-256 and exact size verified before publishing the no-cache
+  pointer. Same existing debug signing certificate; package ID unchanged.
+- Final APK build and lint passed. Android 16 emulator: 27 functional tests at
+  1080x2400, 26 at 720x1280 / 130% font scale; three Worker tests passed.
+  Reviewed assignment, report, and settlement screenshots. Compact navigation
+  labels prevent wrapping at the enlarged font setting.
+- Installed the actual published 0.4.0 APK on the emulator, without rebuilding
+  an artificial older version. One live test fetched/downloaded 0.5.0 and
+  validated size, hash, package, newer version, signing continuity, FileProvider
+  access, and rejection of an intentionally wrong hash.
+- Installed the exact published 0.5.0 APK on the emulator. The live current
+  version dialog test passed. Physical phone receipt and OS installer completion
+  are not verified; no routine phone USB installation was used.
+- No store upload, review submission, testing track, or production rollout.
+
 ### Version 0.4.0 / Code 7
 
 - Uploaded APK and manifest to R2; public download SHA-256 and byte size verified.

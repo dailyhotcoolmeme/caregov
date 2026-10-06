@@ -92,6 +92,7 @@ class ServiceStoreTest {
         val rows = org.json.JSONArray(preferences.getString("bookings", "[]"))
         rows.getJSONObject(0).remove("options")
         rows.getJSONObject(0).remove("revision")
+        rows.getJSONObject(0).remove("workflow")
         preferences.edit().putString("bookings", rows.toString()).commit()
         val booking = ServiceStore(context, name).bookings().first()
         assertEquals("CG-1001", booking.id)

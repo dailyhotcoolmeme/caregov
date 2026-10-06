@@ -1,6 +1,8 @@
 # Caregov Delivery Rules
 
 - Deliver Android updates through Cloudflare R2, not repeated USB installation.
+- Batch authorized workflow changes. Build and validate after the batch, then
+  publish one OTA update; do not build or upload a release for every stage.
 - Reference: `/Users/ourmine/dev/ootd/app/scripts/publish-apk.mjs` and
   `publish-ota.mjs` (mozzzi / 모입찌). Read only; do not change that project.
 - Caregov uses Kotlin/Compose APK updates, not Expo JavaScript bundle updates.

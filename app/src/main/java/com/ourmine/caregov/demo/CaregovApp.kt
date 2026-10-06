@@ -2,6 +2,7 @@ package com.ourmine.caregov.demo
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -51,9 +52,9 @@ fun CaregovApp(updater: UpdateViewModel) {
         val visible = store.visible(current, bookings).sortedWith(compareBy({ it.date }, { it.time }))
         val selected = visible.firstOrNull { it.id == detail }
         val labels = when (current.role) {
-            DemoRole.MANAGER -> listOf("홈", "내 일정", "내 정보")
-            DemoRole.OPERATOR -> listOf("홈", "예약 관리", "내 정보")
-            else -> listOf("홈", "예약 내역", "내 정보")
+            DemoRole.MANAGER -> listOf("홈", "내 일정", "내 정보", "내 정산")
+            DemoRole.OPERATOR -> listOf("홈", "예약 관리", "내 정보", "정산 관리")
+            else -> listOf("홈", "예약 내역", "내 정보", "알림")
         }
         Scaffold(
             topBar = { TopAppBar(
@@ -72,9 +73,12 @@ fun CaregovApp(updater: UpdateViewModel) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             ) },
             bottomBar = { if (!applying && selected == null) NavigationBar(containerColor = Color.White) {
-                listOf(Icons.Outlined.Home, Icons.Outlined.DateRange, Icons.Outlined.Person).forEachIndexed { index, icon ->
-                    NavigationBarItem(selected = tab == index, onClick = { tab = index },
-                        icon = { Icon(icon, null) }, label = { Text(labels[index]) })
+                val financial = current.role in setOf(DemoRole.MANAGER, DemoRole.OPERATOR)
+                val compactLabels = listOf("홈", if (current.role == DemoRole.MANAGER) "일정" else "예약", "내정보", if (financial) "정산" else "알림")
+                listOf(Icons.Outlined.Home, Icons.Outlined.DateRange, Icons.Outlined.Person,
+                    if (financial) Icons.Outlined.CheckCircle else Icons.Outlined.Notifications).forEachIndexed { index, icon ->
+                    NavigationBarItem(selected = tab == index, onClick = { tab = index }, modifier = Modifier.semantics { contentDescription = labels[index] },
+                        icon = { Icon(icon, null) }, label = { Text(compactLabels[index], maxLines = 1, style = MaterialTheme.typography.labelSmall) })
                 }
             } },
         ) { insets ->
@@ -84,17 +88,34 @@ fun CaregovApp(updater: UpdateViewModel) {
             } else Column(Modifier.fillMaxSize().padding(insets).verticalScroll(key(current.id, tab, detail) { rememberScrollState() })
                 .padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 when {
-                    selected != null -> BookingDetails(selected, store.canModify(current, selected), store.canReadReport(current, selected),
+                    selected != null -> BookingDetails(store, current, selected, store.canModify(current, selected),
+                        onChanged = { bookings = store.bookings() },
                         onEdit = { editing = true; formStep = 0; applying = true },
                         onCancel = { reason -> store.cancel(current, selected.id, selected.revision, reason); bookings = store.bookings() })
                     tab == 2 -> AccountScreen(current, onUpdate = {
                         showUpdate = true
                         if (updater.state.phase != UpdatePhase.READY && updater.state.phase != UpdatePhase.DOWNLOADING) updater.check()
                     }, onSignOut = { store.signOut(); account = null })
+                    tab == 3 -> if (current.role in setOf(DemoRole.MANAGER, DemoRole.OPERATOR))
+                        SettlementScreen(current, visible) { detail = it.id }
+                    else NotificationScreen(current, visible) { detail = it.id }
                     tab == 1 -> {
+                        var filter by rememberSaveable(current.id) { mutableStateOf("전체") }
                         SectionTitle(labels[1], "${visible.size}건")
-                        if (visible.isEmpty()) Text("예약된 동행이 없습니다.")
-                        visible.forEach { BookingCard(it) { detail = it.id } }
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("전체", "대기", "진행", "완료", "취소").forEach { label ->
+                                FilterChip(filter == label, { filter = label }, label = { Text(label) })
+                            }
+                        }
+                        val filtered = visible.filter { when (filter) {
+                            "대기" -> it.status in setOf("접수 완료", "배정 대기", "예약 확정")
+                            "진행" -> it.status !in VisitSteps.beforeVisit + setOf("동행 완료", "신청 취소")
+                            "완료" -> it.status == "동행 완료"
+                            "취소" -> it.status == "신청 취소"
+                            else -> true
+                        } }
+                        if (filtered.isEmpty()) Text("해당 예약 내역이 없습니다.")
+                        filtered.forEach { BookingCard(it) { detail = it.id } }
                     }
                     else -> {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -115,6 +136,8 @@ fun CaregovApp(updater: UpdateViewModel) {
                             Statistic("전체 예약", visible.size.toString(), Modifier.weight(1f))
                             Statistic("배정 대기", visible.count { it.manager.isEmpty() && it.status == "접수 완료" }.toString(), Modifier.weight(1f))
                         }
+                        if (current.role == DemoRole.OPERATOR) TextButton(onClick = { tab = 1 }) { Text("접수·배정 내역 보기") }
+                        if (current.role == DemoRole.MANAGER) InfoLine("수락 대기", "${visible.count { it.status == "배정 대기" }}건")
                         val next = visible.firstOrNull { it.date >= LocalDate.now().toString() && it.status !in listOf("동행 완료", "신청 취소") }
                         SectionTitle(if (current.role == DemoRole.MANAGER) "다가오는 일정" else "다가오는 동행")
                         if (next != null) BookingCard(next) { detail = next.id } else Text("예정된 동행이 없습니다.")
@@ -153,8 +176,8 @@ private fun BookingCard(booking: Booking, onClick: () -> Unit) {
 }
 
 @Composable
-private fun BookingDetails(booking: Booking, editable: Boolean, reportShared: Boolean,
-    onEdit: () -> Unit, onCancel: (String) -> Unit) {
+private fun BookingDetails(store: ServiceStore, account: ServiceAccount, booking: Booking, editable: Boolean,
+    onChanged: () -> Unit, onEdit: () -> Unit, onCancel: (String) -> Unit) {
     var confirmCancel by rememberSaveable(booking.id) { mutableStateOf(false) }
     var cancelReason by rememberSaveable(booking.id) { mutableStateOf("일정 변경") }
     var cancelError by remember { mutableStateOf<String?>(null) }
@@ -163,22 +186,21 @@ private fun BookingDetails(booking: Booking, editable: Boolean, reportShared: Bo
     Text("예약번호 ${booking.id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     HorizontalDivider(); SectionTitle("동행 정보")
     InfoLine("이용자", booking.patient)
-    if (booking.options.patientPhone.isNotBlank()) InfoLine("이용자 연락처", booking.options.patientPhone)
+    val privateDetails = account.role != DemoRole.GUARDIAN || account.id == booking.requesterId || store.canReadReport(account, booking)
+    if (privateDetails && booking.options.patientPhone.isNotBlank()) InfoLine("이용자 연락처", booking.options.patientPhone)
     InfoLine("이용자와의 관계", booking.options.relationship)
-    if (booking.options.guardianPhone.isNotBlank()) InfoLine("보호자 연락처", booking.options.guardianPhone)
+    if (privateDetails && booking.options.guardianPhone.isNotBlank()) InfoLine("보호자 연락처", booking.options.guardianPhone)
     InfoLine("서비스", booking.options.service.label)
     InfoLine("방문 일시", "${booking.date} ${booking.time}")
     InfoLine("만날 장소", booking.meeting)
     InfoLine("이동 지원", booking.support)
-    InfoLine("요청사항", booking.note.ifBlank { "등록된 요청사항이 없습니다." })
+    if (privateDetails) InfoLine("요청사항", booking.note.ifBlank { "등록된 요청사항이 없습니다." })
     InfoLine("정보 공유", booking.options.sharing.label)
     PriceSummary(booking.options.hours, booking.options.estimatedWon)
     HorizontalDivider(); SectionTitle("담당 매니저")
     InfoLine("매니저", booking.manager.ifBlank { "배정 대기" })
-    HorizontalDivider(); SectionTitle("동행 결과")
-    Text(if (booking.status == "신청 취소") "취소된 신청입니다." else if (reportShared) "아직 동행 결과가 등록되지 않았습니다."
-        else "결과 정보가 공유되지 않았습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-    if (booking.cancellationReason.isNotBlank()) InfoLine("취소 사유", booking.cancellationReason)
+    WorkflowSection(store, account, booking, onChanged)
+    if (privateDetails && booking.cancellationReason.isNotBlank()) InfoLine("취소 사유", booking.cancellationReason)
     if (editable) {
         HorizontalDivider()
         OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("신청 수정") }
@@ -219,7 +241,7 @@ internal fun SectionTitle(title: String, trailing: String = "") {
 }
 
 @Composable
-private fun InfoLine(label: String, value: String) {
+internal fun InfoLine(label: String, value: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium)

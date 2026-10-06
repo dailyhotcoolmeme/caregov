@@ -21,12 +21,13 @@ class BookingUiTest {
         compose.onNodeWithText("병원 이름").performTextInput(hospital)
         compose.onNodeWithText("진료과").performTextInput("내과")
         compose.onNodeWithText("만날 장소").performScrollTo().performTextInput("1층 로비")
-        compose.onNodeWithText("다음").performScrollTo().performClick()
-        compose.onNodeWithText("신청 내용 확인").performScrollTo().assertIsDisplayed()
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithText("다음").performScrollTo().assertIsDisplayed().performClick()
         val image = compose.onRoot().captureToImage().asAndroidBitmap()
         java.io.File(compose.activity.externalCacheDir, "request-review.png").outputStream().use {
             image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
+        compose.onNodeWithText("신청 내용 확인").performScrollTo().assertIsDisplayed()
         compose.onNode(isToggleable()).performScrollTo().performClick()
         compose.onNodeWithText("동행 신청하기").performScrollTo().performClick()
         compose.onNodeWithText("접수 완료").performScrollTo().assertIsDisplayed()
@@ -35,6 +36,7 @@ class BookingUiTest {
         compose.onNodeWithText("신청 수정").performScrollTo().performClick()
         compose.onNodeWithText("다음").performScrollTo().performClick()
         compose.onNodeWithText("만날 장소").performScrollTo().performTextReplacement("2층 접수처")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithText("다음").performScrollTo().performClick()
         compose.onNode(isToggleable()).performScrollTo().performClick()
         compose.onNodeWithText("변경 내용 저장").performScrollTo().performClick()
@@ -43,7 +45,7 @@ class BookingUiTest {
         compose.onNodeWithText("취소 확정").performClick()
         compose.onNodeWithText("취소된 신청입니다.").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("뒤로").performClick()
-        compose.onNodeWithText("예약 내역").performClick()
+        compose.onNodeWithContentDescription("예약 내역").performClick()
         compose.onNodeWithText("$hospital · 내과", useUnmergedTree = true).performScrollTo().assertIsDisplayed()
     }
     @Test fun accountMenusFollowLoggedInIdentity() {

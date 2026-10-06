@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "applicationId": "com.ourmine.caregov.demo",
-  "versionCode": 7,
-  "versionName": "0.4.0",
-  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.4.0-6e61b2d6b716.apk",
-  "sha256": "6e61b2d6b71617ae0f2b00031a25a927c85a21a977b674c390f047841dcc4840",
-  "sizeBytes": 10015865,
-  "releaseNotes": "본인·가족 동행 신청, 연락처·공유 범위·예상 요금, 신청 내용 확인 및 수정·취소 기능을 추가했습니다."
+  "versionCode": 8,
+  "versionName": "0.5.0",
+  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.0-abada9870cae.apk",
+  "sha256": "abada9870cae3c61d2c789d16741a78c0b8de39d4f1468b0f89042c2a8f1e160",
+  "sizeBytes": 10308363,
+  "releaseNotes": "매니저 배정·일정 관리, 동행 진행·결과 보고서, 공유 설정·이용 평가·알림 내역·정산 관리를 추가했습니다."
 }
