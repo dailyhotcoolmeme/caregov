@@ -10,5 +10,9 @@ local.properties
 .env.*
 !.env.example
 .DS_Store
+node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/android/
 output/
 tmp/

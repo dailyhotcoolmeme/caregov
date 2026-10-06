@@ -1,5 +1,69 @@
 # Android Updates
 
+## Current Delivery: Real Bundle OTA
+
+The owner requested migration from APK-only delivery to mozzzi's Expo bundle
+OTA on 2026-10-06. Current application code is in `mobile/`. Historical APK-only
+descriptions below are not the current delivery model.
+
+- Runtime: `1.0.0`; package: `com.ourmine.caregov.demo`.
+- Expo Updates URL: `https://caregov-ota.dailyhotcoolmeme.workers.dev/manifest`.
+- Dedicated Worker/bucket: `caregov-ota` / `caregov-media-apac`.
+- Pointer: `ota/pointer/1.0.0/android.json`; immutable assets: `ota/files/`.
+- Compatible UI/workflow changes are Hermes JS bundles, not APK downloads.
+  Native library/runtime changes still require a new same-signed installation.
+- Reference: `/Users/ourmine/dev/ootd/app/scripts/publish-ota.mjs` and
+  `/Users/ourmine/dev/ootd/cloudflare/ota/src/index.ts`, read only.
+- No EAS service, store track, remote authentication or payment is introduced.
+
+### Routine Update
+
+1. Batch approved changes in `mobile/`, keeping runtime compatibility.
+2. Run `node --test mobile/tests/*.test.mjs scripts/ota-worker.test.mjs`.
+3. Run `node scripts/publish-bundle.mjs`: export Android, upload hash-named
+   bundle/assets, verify every public hash/size, then update the pointer.
+   Asset keys preserve Metro IDs. Never prune old objects or other projects.
+   The native signature guard rejects changes to installed runtime dependencies,
+   native module sources, signing plugin or native config until a new compatible
+   runtime is built/verified. Pure application JS changes do not require an APK.
+4. Commit source, lockfile and `updates/bundle-android.json` after verification.
+5. Verify an actual installed release changes update ID/UI release while its
+   native package version stays unchanged. Upload alone is not device receipt.
+
+The app checks on launch, foreground and every minute while active. Downloads
+can run during editing, but reload is deferred while a request, report, modal,
+confirmation/error or storage write is active. Records/account writes finish
+before reload. Network failures retain the embedded/previous cached app.
+The account screen also has a normal update-check action.
+
+### Compose Transition
+
+Version 0.6.0 / code 10 contains the new Expo runtime. Older Compose apps cannot
+execute JS bundles, so this single transition needs Android confirmation.
+`android.json` remains only for that bridge. Build with
+`bash scripts/build-mobile.sh`; upload with `node scripts/publish-r2.mjs` after
+validation. Preserve the existing key, not Expo prebuild's generated debug key.
+
+`CaregovLegacyStore` reads old `service_records` preferences without writing or
+deleting them. A single AsyncStorage state preserves records, IDs, revisions,
+reports/settlements, account and signed-out flag. Saved empty lists stay empty;
+malformed existing data blocks migration rather than replacing data with
+fixtures. Only a first install receives the initial local record.
+
+Official API reference: [Expo Updates](https://docs.expo.dev/versions/latest/sdk/updates/).
+
+### Production Boundary
+
+Fictional identities/password and local records are intentional for this scope;
+they are not authentication or protection for real patient data. Shared records
+are on this installation only, not synchronized across multiple phones.
+Current npm audit flags 25 transitive dependency entries (18 high, 7 moderate),
+including build tooling; dependency hardening is unresolved. Automatic suggested
+major downgrades were not applied because they break the verified Expo runtime.
+Do not treat this build as cleared for production patient data or store release.
+
+## Historical APK Delivery
+
 From version 0.3.1, the app reads the no-cache manifest at
 `https://caregov-ota.dailyhotcoolmeme.workers.dev/android.json` on launch and
 when the user selects the update action. APKs and pointers live in the dedicated

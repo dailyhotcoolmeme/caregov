@@ -1,0 +1,73 @@
+{
+  "id": "e878b17a-9b49-478b-b742-afe852335606",
+  "createdAt": "2026-10-06T12:56:23.516Z",
+  "runtimeVersion": "1.0.0",
+  "launchAsset": {
+    "hash": "HtRxA01WAMSUDUf4GfAHEs9VznQbkjtMjMFmTTcoBGI",
+    "url": "https://caregov-ota.dailyhotcoolmeme.workers.dev/files/bundle-HtRxA01WAMSUDUf4GfAHEs9VznQbkjtMjMFmTTcoBGI.js",
+    "contentType": "application/javascript",
+    "key": "HtRxA01WAMSUDUf4GfAHEs9VznQbkjtMjMFmTTcoBGI"
+  },
+  "assets": [
+    {
+      "hash": "-iq30lV4GbK_5QCeRoRO-nFwzxd753NdQ6oqwSlfHVQ",
+      "url": "https://caregov-ota.dailyhotcoolmeme.workers.dev/files/asset--iq30lV4GbK_5QCeRoRO-nFwzxd753NdQ6oqwSlfHVQ.ttf",
+      "contentType": "font/ttf",
+      "key": "b4eb097d35f44ed943676fd56f6bdc51",
+      "fileExtension": ".ttf"
+    }
+  ],
+  "metadata": {},
+  "extra": {
+    "expoClient": {
+      "name": "케어동행",
+      "slug": "caregov",
+      "version": "0.6.0",
+      "orientation": "portrait",
+      "userInterfaceStyle": "light",
+      "runtimeVersion": "1.0.0",
+      "updates": {
+        "url": "https://caregov-ota.dailyhotcoolmeme.workers.dev/manifest",
+        "fallbackToCacheTimeout": 0,
+        "checkAutomatically": "NEVER"
+      },
+      "android": {
+        "package": "com.ourmine.caregov.demo",
+        "versionCode": 10,
+        "softwareKeyboardLayoutMode": "resize"
+      },
+      "experiments": {
+        "reactCompiler": false
+      },
+      "plugins": [
+        "@react-native-community/datetimepicker",
+        [
+          "expo-build-properties",
+          {
+            "android": {
+              "buildArchs": [
+                "arm64-v8a",
+                "x86_64"
+              ],
+              "enableMinifyInReleaseBuilds": true,
+              "enableShrinkResourcesInReleaseBuilds": true
+            }
+          }
+        ],
+        "./plugins/withCaregov.js"
+      ],
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/Users/ourmine/dev/caregov/mobile",
+        "dynamicConfigPath": "/Users/ourmine/dev/caregov/mobile/app.config.js",
+        "staticConfigPath": {},
+        "packageJsonPath": "/Users/ourmine/dev/caregov/mobile/package.json"
+      },
+      "sdkVersion": "57.0.0",
+      "platforms": [
+        "ios",
+        "android"
+      ]
+    }
+  }
+}

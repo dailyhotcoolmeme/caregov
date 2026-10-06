@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "applicationId": "com.ourmine.caregov.demo",
-  "versionCode": 9,
-  "versionName": "0.5.1",
-  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.1-68d691c21a9f.apk",
-  "sha256": "68d691c21a9fa839b5e00de0c516b368118cd43a9c9c594b625c69c39034d83b",
-  "sizeBytes": 10339311,
-  "releaseNotes": "사용자 선택박스와 로그아웃 없는 사용자 변경을 추가하고, 모든 사용자 비밀번호를 260401로 변경했습니다."
+  "versionCode": 10,
+  "versionName": "0.6.0",
+  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.6.0-7161b6ee2b34.apk",
+  "sha256": "7161b6ee2b349abdcee97d8a87895bc7f112719a713eaf1eec02c780d50b9f23",
+  "sizeBytes": 40449994,
+  "releaseNotes": "화면 및 기능을 무선으로 갱신하는 업데이트 방식으로 전환했습니다. 기존 예약과 사용자 정보는 유지됩니다."
 }

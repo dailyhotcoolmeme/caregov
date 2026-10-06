@@ -11,6 +11,12 @@ a user dropdown and password-confirmed identity switching from the account scree
 
 ## Delivery Steps
 
+Current architecture (owner-requested change, 2026-10-06): Expo/React Native
+in `mobile/`, same package/signing key, R2-hosted Expo bundle OTA. Legacy
+Compose sections below describe prior versions, not the current update model.
+Only the transition/native runtime requires an APK. Compatible UI and workflow
+changes are batched and published with `scripts/publish-bundle.mjs`.
+
 1. Shared design, role-specific navigation and account structure. Frontend and
    local fictional identities implemented; production authentication pending.
 2. Patient self-booking and guardian proxy-booking. Local request flow,
