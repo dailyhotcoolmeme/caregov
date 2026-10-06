@@ -12,8 +12,8 @@ android {
         applicationId = "com.ourmine.caregov.demo"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("appVersionCode").orElse("8").get().toInt()
-        versionName = providers.gradleProperty("appVersionName").orElse("0.5.0").get()
+        versionCode = providers.gradleProperty("appVersionCode").orElse("9").get().toInt()
+        versionName = providers.gradleProperty("appVersionName").orElse("0.5.1").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

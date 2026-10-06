@@ -20,9 +20,11 @@ class WorkflowUiTest {
     private fun login(phone: String) {
         store.signOut()
         compose.activityRule.scenario.recreate()
-        compose.onNodeWithText("휴대폰 번호").performTextInput(phone)
-        compose.onNodeWithText("비밀번호").performTextInput("482619")
-        compose.onNode(hasText("로그인") and hasClickAction()).performScrollTo().performClick()
+        val account = store.accounts.first { it.phone == phone }
+        compose.onNodeWithText("사용자").performClick()
+        compose.onNode(hasText("${account.role.label} · ${account.name}") and hasAnyAncestor(isPopup())).performScrollTo().assertIsDisplayed().performClick()
+        compose.onNodeWithText("비밀번호").performTextInput("260401")
+        compose.onNodeWithText("비밀번호").performImeAction()
     }
     private fun open(id: String, tab: String) {
         compose.onNodeWithContentDescription(tab).performClick()
@@ -98,7 +100,7 @@ class WorkflowUiTest {
             compose.onNodeWithText("진료 접수와 귀가를 함께했습니다.").assertDoesNotExist()
             compose.onNodeWithText("접수 창구 동행").assertDoesNotExist()
         } finally {
-            store.signIn("01000000001", "482619")
+            store.signIn("01000000001", "260401")
             compose.activityRule.scenario.recreate()
         }
     }

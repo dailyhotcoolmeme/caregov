@@ -56,9 +56,11 @@ class BookingUiTest {
             store.accounts.forEach { account ->
                 store.signOut()
                 compose.activityRule.scenario.recreate()
-                compose.onNodeWithText("휴대폰 번호").performTextInput(account.phone)
-                compose.onNodeWithText("비밀번호").performTextInput("482619")
-                compose.onNode(hasText("로그인") and hasClickAction()).performScrollTo().performClick()
+                compose.onNodeWithText("휴대폰 번호").assertDoesNotExist()
+                compose.onNodeWithText("사용자").performClick()
+                compose.onNode(hasText("${account.role.label} · ${account.name}") and hasAnyAncestor(isPopup())).performScrollTo().assertIsDisplayed().performClick()
+                compose.onNodeWithText("비밀번호").performTextInput("260401")
+                compose.onNodeWithText("비밀번호").performImeAction()
                 compose.onNodeWithText("${account.name}님,\n안녕하세요").performScrollTo().assertIsDisplayed()
                 if (account.role == DemoRole.MANAGER || account.role == DemoRole.OPERATOR) {
                     compose.onNodeWithText("동행 신청").assertDoesNotExist()
@@ -69,7 +71,7 @@ class BookingUiTest {
                 }
             }
         } finally {
-            store.signIn("01000000001", "482619")
+            store.signIn("01000000001", "260401")
             compose.activityRule.scenario.recreate()
         }
     }

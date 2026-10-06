@@ -6,7 +6,8 @@ Build a complete hospital accompaniment Android application, not a demonstration
 Support both patient self-booking and guardian booking on behalf of a patient.
 Use fictional user records for patients, guardians, managers, and operators.
 User-facing copy and navigation must follow normal service workflows, without
-demonstration labels, scenario controls, or arbitrary role switching.
+demonstration labels or scenario controls. The owner's latest request authorizes
+a user dropdown and password-confirmed identity switching from the account screen.
 
 ## Delivery Steps
 
@@ -73,7 +74,7 @@ The test dependencies explicitly use Espresso 3.7.0 for Android 16 compatibility
   SMS verification, account provisioning, server-side authorization, multi-device
   synchronization, payment, assignment, progress, and report writing are pending.
 - Fictional accounts: 01000000001 (patient), 01000000002 (guardian),
-  01000000003 (manager), 01000000004 (operator); local fixture password 482619.
+  01000000003 (manager), 01000000004 (operator); local fixture password 260401.
   These are public fixtures, not real credentials. Do not use for real patients.
 - Version 0.3.0 / code 5: APK build and lint passed; signature verified.
 - 720x1280 at 130% font scale: 10 instrumentation tests passed, including form
@@ -134,7 +135,7 @@ Build references:
   10,000 per increment. Manager share 80%, operation fee 20%. Amounts are
   recorded when the report is submitted, not charged to a payment instrument.
   Operator confirmation changes settlement records only, never sends money.
-- Additional fictional manager: 01000000005 / same fixture password 482619.
+- Additional fictional manager: 01000000005 / same fixture password 260401.
 - Existing records migrate lazily with empty workflow history, no data reset.
 - This is a functional local app using fictional accounts, not a production
   backend. Multi-device synchronization, server authorization, real payments,
@@ -145,3 +146,15 @@ Build references:
   Three OTA Worker tests passed. The cross-account UI test covers assignment,
   acceptance, all visit steps, report persistence, guardian results, review,
   operator settlement, and revocation of result sharing. Screenshots inspected.
+
+## User Selection (2026-10-06)
+
+- Version 0.5.1 / code 9 replaces manual phone entry with a user dropdown.
+- Account screen includes a password-confirmed user change dialog, without
+  logging out first. Cancelling or a wrong password leaves the current user intact.
+- All five fictional identities use password 260401; the old password is rejected.
+- Switching does not reset booking data. Existing logged-in sessions remain valid.
+- APK build and lint passed. Fifteen focused tests passed at 720x1280 with
+  130% font scale, including all five dropdown choices, password rejection,
+  identity persistence, cancellation, booking preservation, and full visit flow.
+- Login also accepts the password keyboard's Done action. Login screenshot reviewed.

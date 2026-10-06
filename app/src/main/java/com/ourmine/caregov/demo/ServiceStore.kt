@@ -41,7 +41,7 @@ class ServiceStore(context: Context, storageName: String = "service_records") {
     fun signIn(phone: String, pin: String): ServiceAccount? {
         // Local fixture identities only; not server authentication.
         val account = accounts.firstOrNull { it.phone == phone.filter(Char::isDigit) }
-        if (account == null || pin != "482619") return null
+        if (account == null || pin != "260401") return null
         preferences.edit { putString("account", account.id); putBoolean("signed_out", false) }
         return account
     }

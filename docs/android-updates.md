@@ -41,6 +41,21 @@ Do not replace the legacy pointer with an R2 APK URL: old apps reject it.
 
 ## R2 Verification (2026-10-06)
 
+### Version 0.5.1 / Code 9
+
+- Status: uploaded to R2. User dropdown, account-switch dialog, and requested
+  common fictional password 260401; existing booking records retained.
+- APK: https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.1-68d691c21a9f.apk
+- Build and lint passed. Fifteen focused tests passed on the small display with
+  130% font scaling; login screenshot reviewed. Tests cover all users, wrong/old
+  password rejection, persisted identities, cancellation, and visit workflow.
+- Public APK size and SHA-256 verified before updating the R2 pointer. An
+  emulator with the actual 0.5.0 APK downloaded and verified 0.5.1, including
+  signing continuity and wrong-hash rejection. Live current-version dialog
+  passed after installing the published 0.5.1 APK on the emulator.
+- Physical phone receipt and installer completion remain unverified. No store
+  console upload, test track, review submission, or production release.
+
 ### Version 0.5.0 / Code 8
 
 - Status: uploaded to R2, one OTA publication for the batched workflows.

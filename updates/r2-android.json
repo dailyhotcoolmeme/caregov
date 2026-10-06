@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "applicationId": "com.ourmine.caregov.demo",
-  "versionCode": 8,
-  "versionName": "0.5.0",
-  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.0-abada9870cae.apk",
-  "sha256": "abada9870cae3c61d2c789d16741a78c0b8de39d4f1468b0f89042c2a8f1e160",
-  "sizeBytes": 10308363,
-  "releaseNotes": "매니저 배정·일정 관리, 동행 진행·결과 보고서, 공유 설정·이용 평가·알림 내역·정산 관리를 추가했습니다."
+  "versionCode": 9,
+  "versionName": "0.5.1",
+  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.5.1-68d691c21a9f.apk",
+  "sha256": "68d691c21a9fa839b5e00de0c516b368118cd43a9c9c594b625c69c39034d83b",
+  "sizeBytes": 10339311,
+  "releaseNotes": "사용자 선택박스와 로그아웃 없는 사용자 변경을 추가하고, 모든 사용자 비밀번호를 260401로 변경했습니다."
 }

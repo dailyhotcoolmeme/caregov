@@ -17,10 +17,14 @@ class ServiceStoreTest {
         finally { context.deleteSharedPreferences(name) }
     }
     @Test fun loginAndLogoutPersist() = fixture { store, name ->
+        assertNull(store.signIn("01000000004", "482619"))
         assertNull(store.signIn("01000000004", "wrong"))
-        assertEquals(DemoRole.OPERATOR, store.signIn("010-0000-0004", "482619")?.role)
+        assertEquals(DemoRole.OPERATOR, store.signIn("010-0000-0004", "260401")?.role)
         assertEquals(DemoRole.OPERATOR, ServiceStore(context, name).account()?.role)
         store.signOut(); assertNull(ServiceStore(context, name).account())
+    }
+    @Test fun allAccountsUseRequestedPassword() = fixture { store, _ ->
+        store.accounts.forEach { account -> assertEquals(account, store.signIn(account.phone, "260401")) }
     }
     @Test fun selfBookingPersistsAndRemainsUnassigned() = fixture { store, name ->
         val patient = store.accounts.first()

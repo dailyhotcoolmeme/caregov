@@ -47,7 +47,7 @@ fun CaregovApp(updater: UpdateViewModel) {
     }
     val current = account
     if (current == null) {
-        LoginScreen { phone, pin -> store.signIn(phone, pin)?.also { account = it; tab = 0; detail = null } }
+        LoginScreen(store.accounts) { phone, pin -> store.signIn(phone, pin)?.also { account = it; tab = 0; detail = null } }
     } else {
         val visible = store.visible(current, bookings).sortedWith(compareBy({ it.date }, { it.time }))
         val selected = visible.firstOrNull { it.id == detail }
@@ -92,7 +92,9 @@ fun CaregovApp(updater: UpdateViewModel) {
                         onChanged = { bookings = store.bookings() },
                         onEdit = { editing = true; formStep = 0; applying = true },
                         onCancel = { reason -> store.cancel(current, selected.id, selected.revision, reason); bookings = store.bookings() })
-                    tab == 2 -> AccountScreen(current, onUpdate = {
+                    tab == 2 -> AccountScreen(current, store.accounts, onSwitch = { phone, pin ->
+                        store.signIn(phone, pin)?.also { account = it; bookings = store.bookings(); tab = 0; detail = null }
+                    }, onUpdate = {
                         showUpdate = true
                         if (updater.state.phase != UpdatePhase.READY && updater.state.phase != UpdatePhase.DOWNLOADING) updater.check()
                     }, onSignOut = { store.signOut(); account = null })
@@ -215,11 +217,15 @@ private fun BookingDetails(store: ServiceStore, account: ServiceAccount, booking
 }
 
 @Composable
-private fun AccountScreen(account: ServiceAccount, onUpdate: () -> Unit, onSignOut: () -> Unit) {
+private fun AccountScreen(account: ServiceAccount, accounts: List<ServiceAccount>, onSwitch: (String, String) -> ServiceAccount?,
+    onUpdate: () -> Unit, onSignOut: () -> Unit) {
     var confirmLogout by remember { mutableStateOf(false) }
+    var switchUser by remember { mutableStateOf(false) }
     Text(account.name, style = MaterialTheme.typography.headlineSmall)
     Text(account.role.label, color = MaterialTheme.colorScheme.primary)
     HorizontalDivider()
+    OutlinedButton(onClick = { switchUser = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("사용자 변경") }
+    if (switchUser) AccountSwitchDialog(accounts, account, { switchUser = false }, onSwitch)
     InfoLine("휴대폰", account.phone.take(3) + "-" + account.phone.substring(3, 7) + "-" + account.phone.takeLast(4))
     HorizontalDivider()
     ListItem(headlineContent = { Text("앱 업데이트") }, supportingContent = { Text("현재 버전 ${BuildConfig.VERSION_NAME}") },
