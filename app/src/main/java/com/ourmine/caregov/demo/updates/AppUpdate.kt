@@ -12,7 +12,7 @@ data class AppUpdate(
     val releaseNotes: String,
 ) {
     companion object {
-        const val MANIFEST_URL = "https://raw.githubusercontent.com/dailyhotcoolmeme/caregov/main/updates/android.json"
+        const val MANIFEST_URL = "https://caregov-ota.dailyhotcoolmeme.workers.dev/android.json"
         const val APPLICATION_ID = "com.ourmine.caregov.demo"
         const val MAX_APK_BYTES = 150L * 1024 * 1024
 
@@ -37,9 +37,10 @@ data class AppUpdate(
 
         fun isReleaseUrl(value: String): Boolean = runCatching {
             val uri = URI(value)
-            uri.scheme == "https" && uri.host == "github.com" &&
+            val trustedPath = (uri.host == "github.com" && uri.path.startsWith("/dailyhotcoolmeme/caregov/releases/download/")) ||
+                (uri.host == "caregov-ota.dailyhotcoolmeme.workers.dev" && uri.path.matches(Regex("/apk/caregov-[a-zA-Z0-9._-]+\\.apk")))
+            uri.scheme == "https" && trustedPath &&
                 uri.userInfo == null && uri.port == -1 && uri.query == null && uri.fragment == null &&
-                uri.path.startsWith("/dailyhotcoolmeme/caregov/releases/download/") &&
                 uri.path.endsWith(".apk") && !uri.path.contains("..")
         }.getOrDefault(false)
     }

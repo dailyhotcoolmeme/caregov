@@ -1,8 +1,15 @@
 # Android Updates
 
-The app reads `updates/android.json` from the public caregov repository on launch
-and when the user selects the update action. APK files are hosted as GitHub
-release assets. This channel is independent of any store distribution console.
+From version 0.3.1, the app reads the no-cache manifest at
+`https://caregov-ota.dailyhotcoolmeme.workers.dev/android.json` on launch and
+when the user selects the update action. APKs and pointers live in the dedicated
+R2 bucket `caregov-media-apac`. This channel is independent of store consoles.
+
+The implementation follows mozzzi's R2 APK publishing pattern: version plus
+content-hash filename, explicit APK download content type, public download
+hash verification before pointer publication, and locally supplied credentials.
+Unlike mozzzi's Expo app, Caregov is native Kotlin/Compose and uses APK updates,
+not Expo bundle replacement. Android installation approval remains required.
 
 Updates require a higher version code, the same application ID, compatible
 Android requirements, and the same signing certificate as the installed app.
@@ -14,10 +21,36 @@ required; updates are not silent JavaScript updates.
 
 1. Increment the version code and version name in `app/build.gradle.kts`.
 2. Run `./scripts/build-apk.sh :app:lintDebug` and verify the APK.
-3. Upload `output/apk/caregov.apk` to the corresponding GitHub release.
-4. Update `updates/android.json` with the APK URL, version, byte size, SHA-256,
-   and concise user-facing release notes. Commit and push only after upload.
+3. Run `node scripts/publish-r2.mjs`. It derives APK metadata and SHA-256,
+   uploads an immutable hash-named APK, validates the public download, then
+   publishes `ota/pointer/android.json` and verifies its public response.
+4. Commit `updates/r2-android.json` and associated source changes after verification.
 5. Verify public access and test downloading from an older installed version.
+   Do not make USB connection a routine delivery requirement; return the R2 URL.
+
+First-time infrastructure setup: `node scripts/setup-r2.mjs`. This creates the
+dedicated bucket if absent and deploys only the Caregov read-only Worker.
+Do not run this for ordinary app updates.
+
+## Legacy Installation Bridge
+
+Versions before 0.3.1 trust GitHub release URLs only. The old GitHub pointer
+therefore points to the matching 0.3.1 APK on GitHub. Installing that update or
+the direct R2 download migrates the app to the R2 manifest. No USB is needed.
+Do not replace the legacy pointer with an R2 APK URL: old apps reject it.
+
+## R2 Verification (2026-10-06)
+
+- Uploaded 0.3.1 / code 6 to the dedicated R2 bucket.
+- Public APK GET: exact full SHA-256 and byte-size match.
+- Public manifest GET/HEAD: HTTP 200, JSON, `no-store, max-age=0`.
+- Three Worker tests passed: non-cached manifest, immutable downloadable APK,
+  HEAD response, unrelated-path rejection and read-only method enforcement.
+- Android emulator: an older-version build with the R2 updater fetched and
+  verified 0.3.1, including rejection of a wrong SHA-256; five tests passed.
+  After installing the published APK, six tests passed including the live
+  current-version dialog. These are emulator checks, not physical-device receipt.
+- Physical receipt/installation of 0.3.1 remains unverified.
 
 The current APK uses this workstation's existing Android debug signing key.
 Preserve that key outside Git; a different key cannot update this installation.

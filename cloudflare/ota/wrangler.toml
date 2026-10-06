@@ -1,0 +1,9 @@
+name = "caregov-ota"
+main = "src/index.ts"
+compatibility_date = "2026-10-06"
+account_id = "4c0f5d706177b84ade4d424a08ec46e8"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "caregov-media-apac"

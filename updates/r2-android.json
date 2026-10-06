@@ -3,8 +3,8 @@
   "applicationId": "com.ourmine.caregov.demo",
   "versionCode": 6,
   "versionName": "0.3.1",
-  "apkUrl": "https://github.com/dailyhotcoolmeme/caregov/releases/download/android-v0.3.1/caregov.apk",
+  "apkUrl": "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.3.1-2c5e2a69a683.apk",
   "sha256": "2c5e2a69a6833e0a40845bbeaa7bc73a1d54f3516ee5761885c1609ebda7ae22",
   "sizeBytes": 9983097,
-  "releaseNotes": "R2 업데이트 서버로 연결합니다. 이후 앱 업데이트는 R2에서 받습니다."
+  "releaseNotes": "앱을 업데이트했습니다."
 }

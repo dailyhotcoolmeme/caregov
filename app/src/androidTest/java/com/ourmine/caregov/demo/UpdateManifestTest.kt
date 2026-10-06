@@ -18,6 +18,15 @@ class UpdateManifestTest {
     }
 
     @Test
+    fun acceptsOnlyScopedR2DownloadPaths() {
+        val url = "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/caregov-0.3.1-abcdef012345.apk"
+        assertEquals(url, AppUpdate.parse(manifest().put("apkUrl", url).toString()).apkUrl)
+        assertRejected("apkUrl", "https://caregov-ota.dailyhotcoolmeme.workers.dev/apk/other.apk")
+        assertRejected("apkUrl", "https://ootd-media.dailyhotcoolmeme.workers.dev/apk/caregov.apk")
+        assertRejected("apkUrl", url + "?token=invalid")
+    }
+
+    @Test
     fun rejectsOtherPackagesAndUntrustedDownloads() {
         assertRejected("applicationId", "com.example.other")
         assertRejected("apkUrl", "http://github.com/dailyhotcoolmeme/caregov/releases/download/v3/demo.apk")
